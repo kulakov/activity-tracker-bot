@@ -132,8 +132,14 @@ async def change_time(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
 
 def main():
     """Запуск бота."""
-    defaults = Defaults(block=False)
-    application = Application.builder().token(BOT_TOKEN).defaults(defaults).build()
+    application = Application.builder().token(BOT_TOKEN).build()
+
+    # Очищаем все предыдущие обновления при старте
+    async def post_init(application: Application) -> None:
+        await application.bot.delete_webhook()
+        await application.bot.get_updates(offset=-1)
+
+    application.post_init = post_init
 
     # Команды
     application.add_handler(CommandHandler('start', start))
@@ -153,6 +159,7 @@ def main():
 
     application.add_handler(conv_handler)
     application.run_polling()
+
     
 
     # Ежедневный джоб
