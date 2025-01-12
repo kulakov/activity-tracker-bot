@@ -12,6 +12,7 @@ from telegram.ext import (
     ConversationHandler,
     ContextTypes,
     filters,
+    Defaults  # Добавляем Defaults к существующим импортам
 )
 import gspread
 from google.oauth2.service_account import Credentials
@@ -131,12 +132,27 @@ async def change_time(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
 
 def main():
     """Запуск бота."""
-    application = (
-        Application.builder()
-        .token(BOT_TOKEN)
-        .get_updates_drop_pending_updates(True)  # Добавляем этот параметр
-        .build()
+    defaults = Defaults(block=False)
+    application = Application.builder().token(BOT_TOKEN).defaults(defaults).build()
+
+    # Команды
+    application.add_handler(CommandHandler('start', start))
+    application.add_handler(CommandHandler('set_time', set_time))
+    application.add_handler(CommandHandler('change_time', change_time))
+
+    # Хендлеры
+    conv_handler = ConversationHandler(
+        entry_points=[CommandHandler('start', start)],
+        states={
+            ACTIVITY: [MessageHandler(filters.TEXT & ~filters.COMMAND, record_activity)],
+            ENERGY_STATUS: [MessageHandler(filters.Regex('^(Даёт энергию|Забирает энергию)$'), record_energy)],
+            SET_TIME: [MessageHandler(filters.TEXT & ~filters.COMMAND, save_time)],
+        },
+        fallbacks=[CommandHandler('cancel', cancel)],
     )
+
+    application.add_handler(conv_handler)
+    application.run_polling()
     
 
     # Ежедневный джоб
