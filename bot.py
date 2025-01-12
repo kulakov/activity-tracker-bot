@@ -131,7 +131,13 @@ async def change_time(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
 
 def main():
     """Запуск бота."""
-    application = Application.builder().token(BOT_TOKEN).build()
+    application = (
+        Application.builder()
+        .token(BOT_TOKEN)
+        .get_updates_drop_pending_updates(True)  # Добавляем этот параметр
+        .build()
+    )
+    
 
     # Ежедневный джоб
     async def schedule_jobs(context: ContextTypes.DEFAULT_TYPE):
