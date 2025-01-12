@@ -43,9 +43,10 @@ TAGS = {
 }
 
 def setup_google_sheets():
-    """Настройка подключения к Google Sheets."""
-    credentials = Credentials.from_service_account_file(
-        'credentials.json',
+    """Настройка подключения к Google Sheets через переменные окружения."""
+    credentials_info = json.loads(os.getenv("GOOGLE_CREDENTIALS"))
+    credentials = Credentials.from_service_account_info(
+        credentials_info,
         scopes=['https://www.googleapis.com/auth/spreadsheets']
     )
     client = gspread.authorize(credentials)
