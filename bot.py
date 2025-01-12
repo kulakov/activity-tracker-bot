@@ -139,22 +139,6 @@ def main():
 
     application.post_init = post_init
 
-    # Ежедневный джоб
-    async def schedule_jobs(context: ContextTypes.DEFAULT_TYPE):
-        job_queue = application.job_queue
-        user_time = context.user_data.get('reminder_time', time(9, 0))  # По умолчанию 09:00
-        moscow_tz = pytz.timezone('Europe/Moscow')
-        now = datetime.now(moscow_tz)
-        reminder_time = datetime.combine(now.date(), user_time, tzinfo=moscow_tz)
-        if reminder_time <= now:
-            reminder_time += timedelta(days=1)
-
-        job_queue.run_daily(
-            callback=daily_reminder,
-            time=reminder_time.time(),
-            chat_id=context.chat_data['chat_id']
-        )
-
     # Команды
     application.add_handler(CommandHandler('start', start))
     application.add_handler(CommandHandler('set_time', set_time))
