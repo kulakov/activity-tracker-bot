@@ -4,7 +4,7 @@ from datetime import datetime
 import pytz
 from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import (
-    Application,
+    ApplicationBuilder,
     CommandHandler,
     MessageHandler,
     ConversationHandler,
@@ -121,20 +121,7 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 def main():
     """Запуск бота."""
-    application = Application.builder().token(BOT_TOKEN)
-
-    # Проверяем окружение (локально или production)
-    if os.getenv("ENV") == "production":
-        # Настройка вебхуков для сервера
-        application = application.webhook(
-            listen="0.0.0.0",
-            port=int(os.getenv("PORT", 8443)),  # Порт, который использует Render
-            url_path=BOT_TOKEN,
-            webhook_url=f"https://{os.getenv('RENDER_EXTERNAL_URL')}/{BOT_TOKEN}",
-        )
-    else:
-        # Локальный запуск через polling
-        application = application.polling()
+    application = ApplicationBuilder().token(BOT_TOKEN).build()
 
     # Настройка хендлеров
     conv_handler = ConversationHandler(
@@ -149,8 +136,17 @@ def main():
     )
     application.add_handler(conv_handler)
 
-    # Запуск приложения
-    application.run()
+    # Запуск бота
+    if os.getenv("ENV") == "production":
+        # Для вебхуков
+        application.run_webhook(
+            listen="0.0.0.0",
+            port=int(os.getenv("PORT", 8443)),
+            webhook_url=f"https://{os.getenv('RENDER_EXTERNAL_URL')}/{BOT_TOKEN}",
+        )
+    else:
+        # Локальный режим
+        application.run_polling()
 
 if __name__ == "__main__":
     main()
