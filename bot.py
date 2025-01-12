@@ -110,7 +110,14 @@ def main():
         fallbacks=[CommandHandler('cancel', cancel)],
     )
     application.add_handler(conv_handler)
-    application.run_polling()
+
+    # Настройка вебхука
+    application.run_webhook(
+        listen="0.0.0.0",
+        port=int(os.getenv('PORT', '8443')),  # Порт задаётся Render автоматически
+        url_path=BOT_TOKEN,
+        webhook_url=f"https://activity-tracker-bot.onrender.com/{BOT_TOKEN}"
+    )
 
 if __name__ == '__main__':
     main()
