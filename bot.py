@@ -11,8 +11,7 @@ from telegram.ext import (
     MessageHandler,
     ConversationHandler,
     ContextTypes,
-    filters,
-    Defaults  # Добавляем Defaults к существующим импортам
+    filters
 )
 import gspread
 from google.oauth2.service_account import Credentials
@@ -134,33 +133,11 @@ def main():
     """Запуск бота."""
     application = Application.builder().token(BOT_TOKEN).build()
 
-    # Очищаем все предыдущие обновления при старте
     async def post_init(application: Application) -> None:
         await application.bot.delete_webhook()
         await application.bot.get_updates(offset=-1)
 
     application.post_init = post_init
-
-    # Команды
-    application.add_handler(CommandHandler('start', start))
-    application.add_handler(CommandHandler('set_time', set_time))
-    application.add_handler(CommandHandler('change_time', change_time))
-
-    # Хендлеры
-    conv_handler = ConversationHandler(
-        entry_points=[CommandHandler('start', start)],
-        states={
-            ACTIVITY: [MessageHandler(filters.TEXT & ~filters.COMMAND, record_activity)],
-            ENERGY_STATUS: [MessageHandler(filters.Regex('^(Даёт энергию|Забирает энергию)$'), record_energy)],
-            SET_TIME: [MessageHandler(filters.TEXT & ~filters.COMMAND, save_time)],
-        },
-        fallbacks=[CommandHandler('cancel', cancel)],
-    )
-
-    application.add_handler(conv_handler)
-    application.run_polling()
-
-    
 
     # Ежедневный джоб
     async def schedule_jobs(context: ContextTypes.DEFAULT_TYPE):
@@ -195,7 +172,6 @@ def main():
     )
 
     application.add_handler(conv_handler)
-
     application.run_polling()
 
 if __name__ == '__main__':
