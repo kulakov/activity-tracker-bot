@@ -149,7 +149,9 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 async def set_time(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Установка времени уведомлений."""
     await update.message.reply_text(
-        "Во сколько тебе удобно получать напоминание? Напиши время в формате ЧЧ:ММ (например, 09:00).",
+        "Во сколько тебе удобно получать напоминание? Ответь в формате ЧЧ:ММ, используя два числа и двоеточие между ними.\n\n" +
+        "Правильно: 09:00, 14:30, 21:45\n" +
+        "Неправильно: 9:00, 2:30pm, 9.00",
         reply_markup=ReplyKeyboardRemove()
     )
     return SET_TIME
@@ -189,7 +191,9 @@ async def save_time(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         return ConversationHandler.END
     except ValueError:
         await update.message.reply_text(
-            "Неверный формат времени. Пожалуйста, используй формат ЧЧ:ММ (например, 09:00)."
+            "Неверный формат! Используй два числа и двоеточие, например: 09:00, 14:30, 21:45\n\n" +
+            "Часы должны быть от 00 до 23\n" +
+            "Минуты должны быть от 00 до 59"
         )
         return SET_TIME
 
@@ -203,7 +207,11 @@ async def daily_reminder(context: ContextTypes.DEFAULT_TYPE) -> None:
 
 async def change_time(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Изменение времени напоминаний."""
-    await update.message.reply_text("Давай поменяем время. Напиши новое время в формате ЧЧ:ММ.")
+    await update.message.reply_text(
+        "Давай поменяем время. Ответь в формате ЧЧ:ММ, используя два числа и двоеточие между ними.\n\n" +
+        "Правильно: 09:00, 14:30, 21:45\n" +
+        "Неправильно: 9:00, 2:30pm, 9.00"
+    )
     return SET_TIME
 
 def main():
