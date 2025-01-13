@@ -194,8 +194,10 @@ async def handle_transcript_review(update: Update, context: ContextTypes.DEFAULT
                 sheet.append_row([
                     date,
                     activity['text'],
-                    activity.get('energy', 'Не указано'),
-                    ', '.join(activity.get('tags', []))
+                    activity.get('energy', '0'),  # Нейтральная энергия по умолчанию
+                    activity.get('roles', ''),    # Роли из ChatGPT
+                    activity.get('skills', ''),   # Скилы из ChatGPT
+                    activity.get('summary', '')   # Конспект из ChatGPT
                 ])
                 await asyncio.sleep(1)
         except Exception as e:
@@ -243,7 +245,14 @@ async def record_activity(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         try:
             for activity in context.user_data['activities']:
                 logger.info(f"Попытка записи активности: {activity}")
-                sheet.append_row([date, activity['text'], activity['energy']])
+                sheet.append_row([
+                    date, 
+                    activity['text'], 
+                    activity['energy'],
+                    activity.get('roles', ''),  # Роли из ChatGPT
+                    activity.get('skills', ''),  # Скилы из ChatGPT
+                    activity.get('summary', '')  # Конспект из ChatGPT
+                ])
                 logger.info(f"Активность успешно записана: {date}, {activity['text']}, {activity['energy']}")
                 await asyncio.sleep(1)
         except Exception as e:
@@ -263,12 +272,7 @@ async def record_activity(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             )
             return ConversationHandler.END
 
-    context.user_data['activities'].append({'text': text, 'energy': None})
-    keyboard = [['Даёт энергию', 'Забирает энергию']]
-    await update.message.reply_text(
-        "Эта активность даёт или забирает энергию?",
-        reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
-    )
+
     return ENERGY_STATUS
 
 async def record_energy(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -334,7 +338,7 @@ async def set_time(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     )
     return SET_TIME
 
-async def save_time(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def daily_reminder(context: ContextTypes.DEFAULT_TYPE) -> None:
     """Сохранение времени уведомлений."""
     try:
         user_time = datetime.strptime(update.message.text, '%H:%M').time()
@@ -392,7 +396,8 @@ def main():
     conv_handler = ConversationHandler(
         entry_points=[
             CommandHandler('start', start),
-            CommandHandler('set_time', set_time)
+            CommandHandler('set_time', set_time),
+            CommandHandler('analyze', process_transcript)  # Добавляем команду для анализа
         ],
         states={
             ACTIVITY: [
@@ -403,7 +408,7 @@ def main():
             ],
             ENERGY_STATUS: [
                 MessageHandler(
-                    filters.Regex('^(Даёт энергию|Забирает энергию)$'),
+                    filters.Regex('^-2|-1|0|1|2|.*даёт.*|.*забирает.*|.*нейтрально.*$'),
                     record_energy
                 )
             ],
