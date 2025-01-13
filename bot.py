@@ -195,7 +195,7 @@ async def handle_transcript_review(update: Update, context: ContextTypes.DEFAULT
                     date,
                     activity['text'],
                     activity.get('energy', 'Не указано'),
-                    activity.get('tags', '')
+                    ', '.join(activity.get('tags', []))
                 ])
                 await asyncio.sleep(1)
         except Exception as e:
@@ -375,3 +375,68 @@ async def save_time(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             "Минуты должны быть от 00 до 59"
         )
         return SET_TIME
+
+async def daily_reminder(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Ежедневное напоминание."""
+    job = context.job
+    await context.bot.send_message(
+        job.chat_id,
+        text="Привет! Расскажи, что ты делал сегодня. Используй /start для начала записи."
+    )
+
+def main():
+    """Запуск бота."""
+    application = Application.builder().token(BOT_TOKEN).build()
+
+    # Основной обработчик диалога
+    conv_handler = ConversationHandler(
+        entry_points=[
+            CommandHandler('start', start),
+            CommandHandler('set_time', set_time)
+        ],
+        states={
+            ACTIVITY: [
+                MessageHandler(
+                    filters.TEXT & ~filters.COMMAND,
+                    record_activity
+                )
+            ],
+            ENERGY_STATUS: [
+                MessageHandler(
+                    filters.Regex('^(Даёт энергию|Забирает энергию)$'),
+                    record_energy
+                )
+            ],
+            SET_TIME: [
+                MessageHandler(
+                    filters.TEXT & ~filters.COMMAND,
+                    save_time
+                )
+            ],
+            TRANSCRIPT_REVIEW: [
+                MessageHandler(
+                    filters.Regex('^(Всё верно|Нужны правки)$'),
+                    handle_transcript_review
+                )
+            ],
+        },
+        fallbacks=[CommandHandler('cancel', cancel)],
+        allow_reentry=True
+    )
+
+    # Добавляем обработчики
+    application.add_handler(conv_handler)
+    
+    # Добавляем обработчик категорий
+    application.add_handler(MessageHandler(
+        filters.Regex('^добавь (тег|контекст|роль)'), 
+        add_category
+    ))
+    
+    # Отдельный обработчик для изменения времени
+    application.add_handler(CommandHandler('change_time', set_time))
+    
+    application.run_polling()
+
+if __name__ == '__main__':
+    main()
