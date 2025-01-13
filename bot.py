@@ -341,4 +341,37 @@ async def save_time(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         context.user_data['reminder_time'] = user_time
         
         # Отменяем существующее напоминание, если оно есть
-        if 'reminder
+        if 'reminder_job' in context.user_data:
+            context.user_data['reminder_job'].schedule_removal()
+        
+        # Устанавливаем новое напоминание
+        chat_id = update.effective_chat.id
+        cet_tz = pytz.timezone('Europe/Paris')
+        now = datetime.now(cet_tz)
+        
+        # Вычисляем время до следующего напоминания
+        reminder_time = cet_tz.localize(datetime.combine(now.date(), user_time))
+        if reminder_time < now:
+            reminder_time += timedelta(days=1)
+        
+        # Планируем ежедневное напоминание
+        job = context.job_queue.run_daily(
+            daily_reminder,
+            time=user_time,
+            chat_id=chat_id,
+            name=str(chat_id)
+        )
+        context.user_data['reminder_job'] = job
+        
+        await update.message.reply_text(
+            f"Отлично! Буду напоминать тебе каждый день в {user_time.strftime('%H:%M')}.",
+            reply_markup=ReplyKeyboardRemove()
+        )
+        return ConversationHandler.END
+    except ValueError:
+        await update.message.reply_text(
+            "Неверный формат! Используй два числа и двоеточие, например: 09:00, 14:30, 21:45\n\n" +
+            "Часы должны быть от 00 до 23\n" +
+            "Минуты должны быть от 00 до 59"
+        )
+        return SET_TIME
