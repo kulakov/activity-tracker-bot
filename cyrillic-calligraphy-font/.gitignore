@@ -7,10 +7,9 @@ third_party/
 # Generated inference data
 data/inference_input/
 
-# Generated outputs
+# Generated outputs (except the final font)
 output/inference_raw/
 output/svgs/
-output/font/
 output/preview.html
 
 # vLLM server logs/pids
