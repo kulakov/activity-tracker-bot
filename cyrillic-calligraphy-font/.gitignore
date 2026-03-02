@@ -1,0 +1,27 @@
+# Downloaded models (large files)
+models/
+
+# Cloned third-party repos
+third_party/
+
+# Generated inference data
+data/inference_input/
+
+# Generated outputs
+output/inference_raw/
+output/svgs/
+output/font/
+output/preview.html
+
+# vLLM server logs/pids
+*.pid
+vllm_server.log
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+
+# Conda
+*.tar.bz2
